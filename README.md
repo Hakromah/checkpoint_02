@@ -1,70 +1,150 @@
-# Getting Started with Create React App
+# Getting started:
+Clone this repository and run
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+    npm install
 
-## Available Scripts
+Inside the repository.
 
-In the project directory, you can run:
+Start editing the **src/app.js** file for the react part, and **src/server/server.ts** for the express.js server part.
 
-### `npm start`
+Run:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+    npm run dev
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+This will start the react app and the server app at the same time, with hot reload enabled for both of them.
 
-### `npm test`
+React app will run on **localhost:3000** and the express server needs to be created, to run on **localhost:3001**.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+You should use:
 
-### `npm run build`
+    import cors from "cors";
+    app.use(cors());
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+to enable CORS for the express.js server, so that it accepts http requests from the react app.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Build a website where a user can input text, send it to the express.js server using a http POST request, and use an http GET request to get all posts sent to the server. The posts will be stored in a simple array in the server.
 
-### `npm run eject`
+## For react app
+You can use function or class components for react.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Write an input field to get the text, and a "Save" button, which when pressed will send a POST request to http://localhost:3001/api/posts containing a JSON object, that looks like: 
+    
+    { text: "Input text here" }.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+When the App component mounts, make a GET request to http://localhost:3001/api/posts to get all the posts saved in the server.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+You can use useSWR, or fetch, or whatever solution you want, to get this information.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Hint: fetcher for useSWR looks like this:
 
-## Learn More
+    const fetcher = (url) => fetch(url).then((res) => res.json());
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+To make HTTP requests, use fetch like so:
 
-### Code Splitting
+    // a GET request:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+    const response = await fetch(API_BASE_URL + "api/posts", {
+        method: "GET",
+        mode: "cors",
+        headers: {
+        "Content-Type": "application/json",
+        },
+    });
+    response.json(); // will give you the json response from this request
+    
+    // a POST request:
+    const response = await fetch(API_BASE_URL + "api/posts", {
+        method: "POST",
+        mode: "cors",
+        headers: {
+        "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: text }),
+    });
+    response.json(); // will give you the json response from this request
 
-### Analyzing the Bundle Size
+    // a PUT request:
+    const response = await fetch(`${API_BASE_URL}api/posts/${id}`, {
+      method: "PUT",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: text }),
+    });
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+    // DELETE
+    const response = await fetch(API_BASE_URL + `api/posts/${id}`, {
+      method: "DELETE",
+      mode: "cors",
+    });
 
-### Making a Progressive Web App
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+fetch() is async, so it returns a Promise.
 
-### Advanced Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+The express.js server should return a list of posts in a JSON response, with status code 200. The response should look like this:
 
-### Deployment
+    [
+        {
+            id: 0,
+            text: "Text 1 here",
+            timestamp: 1676229451520
+        },
+        {
+            id: 1,
+            text: "Text 2 here",
+            timestamp: 1676229451540
+        },
+        ....
+    ]
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Display all the posts in the page, each post in its own Post component. The Post component will have the text, and two buttons "Delete" and "Update". 
 
-### `npm run build` fails to minify
+The text inside the post component should be editable. You can use an Input tag, or a simple tag with the property contenteditable enabled, you can choose how you want to do this.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The Delete button will send an http DELETE request to http://localhost:3001/api/posts/${id} to delete a post with that specific ID.
+
+The Update button will send an http PUT request to http://localhost:3001/api/posts/${id}, to update the post text with whatever you edited in that post text.
+
+After a Delete or Update, trigger an update to properly display the list of posts, with the correct ones that were deleted or updated.
+
+Hint: if you useSWR, you can call the mutate function right after sending the updated or delete request.
+
+## For express.js server
+
+Don't forget about the **cors** part, otherwise you'll have problems sending http request from frontend to backend.
+
+Create an express.js app that will listen on port 3001. 
+
+Configure your express app to accept JSON from the frontend.
+
+Write functions for each action (getAll, create, updateByID, deleteByID), and use them in your express server. Write the proper types for these functions (req and res objects as parameters).
+
+Write type definitions for your Posts array.
+
+ID is number, and it starts at 1 and then gets incremented by +1 every time a new post gets created. So the first post will have ID 1, second post will have ID 2, and so on.
+
+Use the Date class to get the current timestamp on the server, when creating a new post.
+
+## Optional: Button to sort and reverse sort by timestamp.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
